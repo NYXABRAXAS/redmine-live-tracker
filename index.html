@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prohorizon Redmine MIS Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         .clickable { cursor: pointer; text-decoration: underline; color: #2563eb; font-weight: 600; }
         .clickable:hover { color: #1e40af; background-color: #f1f5f9; }
@@ -22,18 +23,16 @@
             <div class="flex gap-4 items-end">
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 mb-1">FROM DATE</label>
-                    <input type="date" id="startDate" class="border border-slate-300 p-2 rounded text-sm focus:ring-2 focus:ring-orange-500 outline-none">
+                    <input type="date" id="startDate" class="border border-slate-300 p-2 rounded text-sm outline-none">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 mb-1">TO DATE</label>
-                    <input type="date" id="endDate" class="border border-slate-300 p-2 rounded text-sm focus:ring-2 focus:ring-orange-500 outline-none">
+                    <input type="date" id="endDate" class="border border-slate-300 p-2 rounded text-sm outline-none">
                 </div>
                 <button onclick="applyDateFilter()" class="bg-orange-600 text-white px-5 py-2 rounded font-bold hover:bg-orange-700 shadow-sm transition">APPLY CALENDAR</button>
                 <button onclick="loadData()" class="bg-slate-700 text-white px-5 py-2 rounded font-bold hover:bg-slate-800 shadow-sm transition">REFRESH DATA</button>
             </div>
-            <div id="loadingStatus" class="hidden items-center text-orange-600 font-bold animate-pulse">
-                Syncing with Redmine...
-            </div>
+            <div id="loadingStatus" class="hidden items-center text-orange-600 font-bold animate-pulse">Syncing with Redmine...</div>
         </div>
     </div>
 
@@ -42,7 +41,7 @@
             <span class="bg-orange-600 w-2 h-5 mr-2"></span> Overall Projects Summary
         </h2>
         <div class="bg-white shadow rounded overflow-x-auto">
-            <table class="w-full border-collapse">
+            <table class="w-full border-collapse" id="summaryTable">
                 <thead>
                     <tr>
                         <th class="text-left">Project</th>
@@ -62,9 +61,12 @@
     </div>
 
     <div class="mb-8">
-        <div class="bg-header text-white p-2 font-bold uppercase text-xs tracking-wider rounded-t">Project Resolution (Assignee Wise)</div>
+        <div class="bg-header text-white p-2 font-bold uppercase text-xs tracking-wider rounded-t flex justify-between items-center">
+            <span>Project Resolution (Assignee Wise)</span>
+            <button onclick="exportTableToExcel('assigneeResTable', 'Assignee_Resolution')" class="bg-white text-orange-600 px-3 py-1 rounded text-[10px] hover:bg-gray-100 transition">EXPORT ASSIGNEE LIST</button>
+        </div>
         <div class="bg-white shadow table-container rounded-b">
-            <table class="w-full border-collapse">
+            <table class="w-full border-collapse" id="assigneeResTable">
                 <thead>
                     <tr>
                         <th class="text-left">Project</th>
@@ -86,8 +88,11 @@
 
     <div class="mb-10">
         <div class="bg-header text-white p-2 font-bold uppercase text-xs tracking-wider flex justify-between items-center rounded-t">
-            <span id="detailTitle">Ticket Details (Full List)</span>
-            <input type="text" id="searchBox" onkeyup="searchTable()" placeholder="Search Subject, ID, or Assignee..." class="text-black font-normal p-1 px-3 text-xs rounded-full w-72 outline-none border-none">
+            <div class="flex items-center gap-4">
+                <span id="detailTitle">Ticket Details (Full List)</span>
+                <button id="btnExportDetails" onclick="exportDetailsToExcel()" class="bg-white text-orange-600 px-3 py-1 rounded text-[10px] hover:bg-gray-100 transition hidden">EXPORT THIS LIST</button>
+            </div>
+            <input type="text" id="searchBox" oninput="searchTable()" placeholder="Search Subject, ID, or Assignee..." class="text-black font-normal p-1 px-3 text-xs rounded-full w-72 outline-none">
         </div>
         <div class="bg-white shadow table-container rounded-b">
             <table class="w-full border-collapse" id="detailsTable">
@@ -112,6 +117,8 @@
 const API = window.location.origin + "/api/issues";
 let allIssues = [];
 let activeIssues = [];
+let filteredListForExport = []; // Stores the current click-filtered list
+let searchTimeout;
 
 async function loadData() {
     const loader = document.getElementById('loadingStatus');
@@ -122,9 +129,7 @@ async function loadData() {
         allIssues = data.issues || [];
         activeIssues = [...allIssues]; 
         refreshUI();
-    } catch (err) { 
-        console.error("Fetch Error:", err);
-    }
+    } catch (err) { console.error("Fetch Error:", err); }
     finally { loader.classList.add('hidden'); loader.classList.remove('flex'); }
 }
 
@@ -148,8 +153,10 @@ function applyDateFilter() {
 function refreshUI() {
     buildProjectSummary();
     buildAssigneeResolution();
+    filteredListForExport = activeIssues;
     renderTickets(activeIssues);
     document.getElementById('detailTitle').innerText = "Ticket Details (Full List)";
+    document.getElementById('btnExportDetails').classList.remove('hidden');
 }
 
 function buildProjectSummary() {
@@ -249,7 +256,9 @@ function filterData(mode, val, sub) {
         title = `${uName} (${pName}) - Pending ${sub}`;
     }
 
+    filteredListForExport = list;
     document.getElementById('detailTitle').innerText = title;
+    document.getElementById('btnExportDetails').classList.remove('hidden');
     renderTickets(list);
     document.getElementById('detailsTable').scrollIntoView({ behavior: 'smooth' });
 }
@@ -274,9 +283,42 @@ function renderTickets(list) {
 }
 
 function searchTable() {
-    const term = document.getElementById("searchBox").value.toLowerCase();
-    const rows = document.querySelectorAll("#ticketTable tr");
-    rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(term) ? "" : "none");
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const term = document.getElementById("searchBox").value.toLowerCase();
+        const rows = document.querySelectorAll("#ticketTable tr");
+        rows.forEach(r => r.style.display = r.textContent.toLowerCase().includes(term) ? "" : "none");
+    }, 300);
+}
+
+// EXPORT FUNCTIONS
+function exportTableToExcel(tableID, filename) {
+    const table = document.getElementById(tableID);
+    const wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+    XLSX.writeFile(wb, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
+
+function exportDetailsToExcel() {
+    const title = document.getElementById('detailTitle').innerText.replace(/ /g, "_");
+    // Map the complex objects to a flat structure for Excel
+    const dataToExport = filteredListForExport.map(i => {
+        const createdDate = new Date(i.created_on);
+        return {
+            "ID": i.id,
+            "Project": i.project.name,
+            "Subject": i.subject,
+            "Tracker": i.tracker.name,
+            "Status": i.status.name,
+            "Assignee": i.assigned_to?.name || "Unassigned",
+            "Created Date": createdDate.toLocaleDateString('en-GB'),
+            "Days Pending": Math.floor((Date.now() - createdDate) / (1000 * 60 * 60 * 24))
+        };
+    });
+    
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Tickets");
+    XLSX.writeFile(wb, `${title}_Report.xlsx`);
 }
 
 loadData();
