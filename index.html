@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prohorizon Redmine MIS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .clickable { cursor: pointer; text-decoration: underline; color: #2563eb; font-weight: 600; }
+        .clickable:hover { color: #1e40af; background-color: #f1f5f9; }
+        .table-container { max-height: 500px; overflow-y: auto; border: 1px solid #cbd5e1; }
+        th { position: sticky; top: 0; background: #334155; color: white; z-index: 10; padding: 10px; border: 1px solid #475569; font-size: 11px; text-transform: uppercase; }
+        td { padding: 6px 10px; border: 1px solid #e2e8f0; font-size: 12px; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .bg-header { background-color: #f97316; } 
+    </style>
+</head>
+<body class="bg-slate-100 p-4">
+
+    <div class="bg-white p-4 rounded shadow-md mb-6 border-t-4 border-orange-600">
+        <div class="flex flex-wrap justify-between items-end gap-4">
+            <div class="flex gap-4 items-end">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 mb-1">FROM DATE</label>
+                    <input type="date" id="startDate" class="border border-slate-300 p-2 rounded text-sm focus:ring-2 focus:ring-orange-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 mb-1">TO DATE</label>
+                    <input type="date" id="endDate" class="border border-slate-300 p-2 rounded text-sm focus:ring-2 focus:ring-orange-500 outline-none">
+                </div>
+                <button onclick="applyDateFilter()" class="bg-orange-600 text-white px-5 py-2 rounded font-bold hover:bg-orange-700 shadow-sm transition">APPLY CALENDAR</button>
+                <button onclick="loadData()" class="bg-slate-700 text-white px-5 py-2 rounded font-bold hover:bg-slate-800 shadow-sm transition">REFRESH DATA</button>
+            </div>
+            <div id="loadingStatus" class="hidden items-center text-orange-600 font-bold animate-pulse">
+                Syncing with Redmine...
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-8">
+        <h2 class="text-md font-bold mb-2 text-slate-700 flex items-center">
+            <span class="bg-orange-600 w-2 h-5 mr-2"></span> Overall Projects Summary
+        </h2>
+        <div class="bg-white shadow rounded overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th class="text-left">Project</th>
+                        <th>Total Tickets</th>
+                        <th>Pending</th>
+                        <th>Resolved</th>
+                        <th>SR Pending</th>
+                        <th>CR Pending</th>
+                        <th>Repeated SR Pending</th>
+                        <th>Support Pending</th>
+                        <th>Feature Pending</th>
+                    </tr>
+                </thead>
+                <tbody id="projectSummary"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mb-8">
+        <div class="bg-header text-white p-2 font-bold uppercase text-xs tracking-wider rounded-t">Project Resolution (Assignee Wise)</div>
+        <div class="bg-white shadow table-container rounded-b">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th class="text-left">Project</th>
+                        <th class="text-left">Assignee</th>
+                        <th>Total</th>
+                        <th>Pending</th>
+                        <th>Resolved</th>
+                        <th>SR Pending</th>
+                        <th>CR Pending</th>
+                        <th>Repeated SR Pending</th>
+                        <th>Support Pending</th>
+                        <th>Feature Pending</th>
+                    </tr>
+                </thead>
+                <tbody id="assigneeResolution"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mb-10">
+        <div class="bg-header text-white p-2 font-bold uppercase text-xs tracking-wider flex justify-between items-center rounded-t">
+            <span id="detailTitle">Ticket Details (Full List)</span>
+            <input type="text" id="searchBox" onkeyup="searchTable()" placeholder="Search Subject, ID, or Assignee..." class="text-black font-normal p-1 px-3 text-xs rounded-full w-72 outline-none border-none">
+        </div>
+        <div class="bg-white shadow table-container rounded-b">
+            <table class="w-full border-collapse" id="detailsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th class="text-left">Project</th>
+                        <th class="text-left">Subject</th>
+                        <th>Tracker</th>
+                        <th>Status</th>
+                        <th>Assignee</th>
+                        <th>Created</th>
+                        <th>Days Pending</th>
+                    </tr>
+                </thead>
+                <tbody id="ticketTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+<script>
+const API = window.location.origin + "/api/issues";
+let allIssues = [];
+let activeIssues = [];
+
+async function loadData() {
+    const loader = document.getElementById('loadingStatus');
+    loader.classList.remove('hidden'); loader.classList.add('flex');
+    try {
+        const res = await fetch(API);
+        const data = await res.json();
+        allIssues = data.issues || [];
+        activeIssues = [...allIssues]; 
+        refreshUI();
+    } catch (err) { 
+        console.error("Fetch Error:", err);
+    }
+    finally { loader.classList.add('hidden'); loader.classList.remove('flex'); }
+}
+
+function isResolved(status) {
+    return ["Resolved", "Closed", "Rejected", "Completed"].includes(status);
+}
+
+function applyDateFilter() {
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    activeIssues = allIssues.filter(i => {
+        const created = i.created_on.split('T')[0];
+        let match = true;
+        if (start) match = match && (created >= start);
+        if (end) match = match && (created <= end);
+        return match;
+    });
+    refreshUI();
+}
+
+function refreshUI() {
+    buildProjectSummary();
+    buildAssigneeResolution();
+    renderTickets(activeIssues);
+    document.getElementById('detailTitle').innerText = "Ticket Details (Full List)";
+}
+
+function buildProjectSummary() {
+    let projects = {};
+    activeIssues.forEach(i => {
+        let p = i.project.name;
+        let t = i.tracker.name;
+        if (!projects[p]) projects[p] = { total:0, pending:0, resolved:0, sr:0, cr:0, repeat:0, support:0, feature:0 };
+        projects[p].total++;
+        if (isResolved(i.status.name)) projects[p].resolved++;
+        else {
+            projects[p].pending++;
+            if (t === "SR") projects[p].sr++;
+            else if (t === "CR") projects[p].cr++;
+            else if (t === "Repeated SR") projects[p].repeat++;
+            else if (t === "Support") projects[p].support++;
+            else if (t === "Feature") projects[p].feature++;
+        }
+    });
+
+    let html = "";
+    Object.keys(projects).sort().forEach(p => {
+        const d = projects[p];
+        html += `<tr>
+            <td class="font-bold text-slate-700">${p}</td>
+            <td class="text-center font-bold">${d.total}</td>
+            <td class="text-center text-orange-600 clickable" onclick="filterData('proj', '${p}', 'Pending')">${d.pending}</td>
+            <td class="text-center text-green-600 clickable" onclick="filterData('proj', '${p}', 'Resolved')">${d.resolved}</td>
+            <td class="text-center clickable" onclick="filterData('proj-track', '${p}', 'SR')">${d.sr}</td>
+            <td class="text-center clickable" onclick="filterData('proj-track', '${p}', 'CR')">${d.cr}</td>
+            <td class="text-center clickable" onclick="filterData('proj-track', '${p}', 'Repeated SR')">${d.repeat}</td>
+            <td class="text-center clickable" onclick="filterData('proj-track', '${p}', 'Support')">${d.support}</td>
+            <td class="text-center clickable" onclick="filterData('proj-track', '${p}', 'Feature')">${d.feature}</td>
+        </tr>`;
+    });
+    document.getElementById("projectSummary").innerHTML = html;
+}
+
+function buildAssigneeResolution() {
+    let map = {};
+    activeIssues.forEach(i => {
+        let p = i.project.name;
+        let u = i.assigned_to?.name || "Unassigned";
+        let t = i.tracker.name;
+        let key = `${p}|${u}`;
+        if (!map[key]) map[key] = { p, u, total:0, pending:0, resolved:0, sr:0, cr:0, repeat:0, support:0, feature:0 };
+        map[key].total++;
+        if (isResolved(i.status.name)) map[key].resolved++;
+        else {
+            map[key].pending++;
+            if (t === "SR") map[key].sr++;
+            else if (t === "CR") map[key].cr++;
+            else if (t === "Repeated SR") map[key].repeat++;
+            else if (t === "Support") map[key].support++;
+            else if (t === "Feature") map[key].feature++;
+        }
+    });
+
+    let html = "";
+    Object.values(map).sort((a,b) => a.p.localeCompare(b.p)).forEach(d => {
+        html += `<tr>
+            <td>${d.p}</td>
+            <td class="font-bold">${d.u}</td>
+            <td class="text-center font-bold bg-slate-50">${d.total}</td>
+            <td class="text-center text-orange-600 clickable" onclick="filterData('user', '${d.p}|${d.u}', 'Pending')">${d.pending}</td>
+            <td class="text-center text-green-600 clickable" onclick="filterData('user', '${d.p}|${d.u}', 'Resolved')">${d.resolved}</td>
+            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'SR')">${d.sr}</td>
+            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'CR')">${d.cr}</td>
+            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'Repeated SR')">${d.repeat}</td>
+            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'Support')">${d.support}</td>
+            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'Feature')">${d.feature}</td>
+        </tr>`;
+    });
+    document.getElementById("assigneeResolution").innerHTML = html;
+}
+
+function filterData(mode, val, sub) {
+    let list = [];
+    let title = "";
+
+    if (mode === 'proj') {
+        list = activeIssues.filter(i => i.project.name === val && (sub === 'Pending' ? !isResolved(i.status.name) : isResolved(i.status.name)));
+        title = `${val} - ${sub} Tickets`;
+    } 
+    else if (mode === 'proj-track') {
+        list = activeIssues.filter(i => i.project.name === val && i.tracker.name === sub && !isResolved(i.status.name));
+        title = `${val} - Pending ${sub}`;
+    }
+    else if (mode === 'user') {
+        const [pName, uName] = val.split('|');
+        list = activeIssues.filter(i => i.project.name === pName && (i.assigned_to?.name || "Unassigned") === uName && (sub === 'Pending' ? !isResolved(i.status.name) : isResolved(i.status.name)));
+        title = `${uName} (${pName}) - ${sub} Tickets`;
+    }
+    else if (mode === 'user-track') {
+        const [pName, uName] = val.split('|');
+        list = activeIssues.filter(i => i.project.name === pName && (i.assigned_to?.name || "Unassigned") === uName && i.tracker.name === sub && !isResolved(i.status.name));
+        title = `${uName} (${pName}) - Pending ${sub}`;
+    }
+
+    document.getElementById('detailTitle').innerText = title;
+    renderTickets(list);
+    document.getElementById('detailsTable').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderTickets(list) {
+    let html = "";
+    list.forEach(i => {
+        const createdDate = new Date(i.created_on);
+        const days = Math.floor((Date.now() - createdDate) / (1000 * 60 * 60 * 24));
+        html += `<tr>
+            <td class="text-center font-bold text-blue-600 underline"><a target="_blank" href="https://redmine.prohorizon.in:3000/issues/${i.id}">${i.id}</a></td>
+            <td>${i.project.name}</td>
+            <td class="max-w-md truncate font-medium">${i.subject}</td>
+            <td class="text-center text-[10px] font-bold uppercase">${i.tracker.name}</td>
+            <td class="text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isResolved(i.status.name) ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">${i.status.name}</span></td>
+            <td>${i.assigned_to?.name || "Unassigned"}</td>
+            <td class="text-center">${createdDate.toLocaleDateString('en-GB')}</td>
+            <td class="text-center font-bold ${days > 7 && !isResolved(i.status.name) ? 'text-red-600 bg-red-50' : ''}">${days}</td>
+        </tr>`;
+    });
+    document.getElementById("ticketTable").innerHTML = html;
+}
+
+function searchTable() {
+    const term = document.getElementById("searchBox").value.toLowerCase();
+    const rows = document.querySelectorAll("#ticketTable tr");
+    rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(term) ? "" : "none");
+}
+
+loadData();
+</script>
+</body>
+</html>
