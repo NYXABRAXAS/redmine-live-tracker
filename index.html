@@ -8,29 +8,28 @@
     <style>
         :root {
             --pro-red: #D32F2F;
-            --pro-grey: #64748b; /* Professional Slate Grey for borders */
+            --pro-grey: #e2e8f0; /* Soft Professional Grey for borders */
             --wa-green: #25D366;
         }
-        .clickable { cursor: pointer; transition: all 0.2s; position: relative; }
-        .clickable:hover { background-color: #f1f5f9 !important; color: var(--pro-red) !important; font-weight: 800; }
-        .table-container { max-height: 500px; overflow-y: auto; border: 1px solid #e2e8f0; }
+        .clickable { cursor: pointer; transition: all 0.2s; }
+        .clickable:hover { background-color: #f8fafc !important; color: var(--pro-red) !important; font-weight: 800; }
         
-        /* Headers - Sleek Dark Grey */
+        /* Soft Grey Borders */
+        .border-soft { border: 1px solid var(--pro-grey); }
+        .table-container { max-height: 500px; overflow-y: auto; border: 1px solid var(--pro-grey); }
+        
         th { position: sticky; top: 0; background: #334155; color: white; z-index: 10; padding: 10px; font-size: 10px; text-transform: uppercase; border: 1px solid #475569; }
         td { padding: 8px 10px; border: 1px solid #f1f5f9; font-size: 12px; color: #1e293b; }
         tr:nth-child(even) { background-color: #f8fafc; }
-        
-        .btn-action { transition: transform 0.1s; }
-        .btn-action:active { transform: scale(0.95); }
     </style>
 </head>
-<body class="bg-[#fcfcfc] p-4 font-sans">
+<body class="bg-[#fcfcfc] p-4 font-sans text-slate-900">
 
-    <div class="bg-white rounded shadow-sm mb-4 border-t-4 border-[#D32F2F] p-4 border border-slate-200">
+    <div class="bg-white rounded shadow-sm mb-4 border-t-4 border-[#D32F2F] p-4 border-soft">
         <div class="flex flex-wrap justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <div class="h-10 border-l-4 border-slate-800 pl-3">
-                    <h1 class="text-xl font-black text-slate-900">PROHORIZON <span class="text-[#D32F2F]">DIGITECH</span></h1>
+                    <h1 class="text-xl font-black">PROHORIZON <span class="text-[#D32F2F]">DIGITECH</span></h1>
                     <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Loan Origination System | OPTIM</p>
                 </div>
             </div>
@@ -38,64 +37,54 @@
             <div class="flex items-end gap-2">
                 <div>
                     <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">From Date</label>
-                    <input type="date" id="startDate" class="border border-slate-300 p-2 rounded text-xs font-bold focus:ring-1 focus:ring-red-500 outline-none">
+                    <input type="date" id="startDate" class="border border-slate-300 p-2 rounded text-xs font-bold outline-none">
                 </div>
                 <div>
                     <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">To Date</label>
-                    <input type="date" id="endDate" class="border border-slate-300 p-2 rounded text-xs font-bold focus:ring-1 focus:ring-red-500 outline-none">
+                    <input type="date" id="endDate" class="border border-slate-300 p-2 rounded text-xs font-bold outline-none">
                 </div>
-                <button onclick="applyDateFilter()" class="btn-action bg-[#D32F2F] text-white px-5 py-2 rounded text-[10px] font-black uppercase">Apply Calendar</button>
-                <button onclick="loadData()" class="btn-action bg-slate-800 text-white px-5 py-2 rounded text-[10px] font-black uppercase">Refresh Data</button>
+                <button onclick="applyDateFilter()" class="bg-[#D32F2F] text-white px-5 py-2 rounded text-[10px] font-black uppercase">Apply Calendar</button>
+                <button onclick="loadData()" class="bg-slate-800 text-white px-5 py-2 rounded text-[10px] font-black uppercase">Refresh Data</button>
             </div>
         </div>
     </div>
 
-    <div class="mb-6">
-        <div class="bg-slate-100 text-slate-700 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border border-slate-200 border-b-0 rounded-t flex items-center gap-2">
-            <span class="w-1.5 h-3 bg-[#D32F2F]"></span> Overall Projects Summary
+    <div class="grid grid-cols-1 gap-6 mb-6">
+        <div>
+            <div class="bg-slate-100 px-3 py-2 text-[10px] font-black uppercase border-soft border-b-0 rounded-t">Overall Project Summary</div>
+            <div class="bg-white shadow-sm overflow-x-auto border-soft rounded-b">
+                <table class="w-full text-center">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Project Name</th>
+                            <th>Total</th>
+                            <th class="text-red-400">Pending</th>
+                            <th class="text-green-400">Resolved</th>
+                            <th>SR</th><th>CR</th><th>Repeat SR</th><th>Support</th><th>Feature</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectSummary"></tbody>
+                </table>
+            </div>
         </div>
-        <div class="bg-white shadow-sm overflow-x-auto border border-slate-200 rounded-b">
-            <table class="w-full border-collapse">
-                <thead>
-                    <tr class="text-center">
-                        <th class="text-left">Project Name</th>
-                        <th>Total</th>
-                        <th class="text-red-400">Pending</th>
-                        <th class="text-green-400">Resolved</th>
-                        <th>SR</th>
-                        <th>CR</th>
-                        <th>Repeat SR</th>
-                        <th>Support</th>
-                        <th>Feature</th>
-                    </tr>
-                </thead>
-                <tbody id="projectSummary" class="text-center"></tbody>
-            </table>
-        </div>
-    </div>
 
-    <div class="mb-6">
-        <div class="bg-slate-800 text-white px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-t flex items-center gap-2">
-            Assignee Wise Breakdown
-        </div>
-        <div class="bg-white shadow-sm table-container border border-slate-200 rounded-b">
-            <table class="w-full border-collapse">
-                <thead>
-                    <tr class="text-center">
-                        <th class="text-left">Project</th>
-                        <th class="text-left">Assignee</th>
-                        <th>Total</th>
-                        <th class="text-red-400">Pending</th>
-                        <th class="text-green-400">Resolved</th>
-                        <th>SR</th>
-                        <th>CR</th>
-                        <th>Repeat</th>
-                        <th>Support</th>
-                        <th>Feature</th>
-                    </tr>
-                </thead>
-                <tbody id="assigneeResolution" class="text-center"></tbody>
-            </table>
+        <div>
+            <div class="bg-slate-800 text-white px-3 py-2 text-[10px] font-black uppercase rounded-t">Assignee Wise Breakdown</div>
+            <div class="bg-white shadow-sm table-container border-soft rounded-b">
+                <table class="w-full text-center">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Project</th>
+                            <th class="text-left">Assignee</th>
+                            <th>Total</th>
+                            <th class="text-red-400">Pending</th>
+                            <th class="text-green-400">Resolved</th>
+                            <th>SR</th><th>CR</th><th>Repeat</th><th>Support</th><th>Feature</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assigneeResolution"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -104,12 +93,10 @@
             <span id="detailTitle" class="text-[10px] font-black uppercase tracking-widest">TICKET DETAILS</span>
             <div class="flex gap-2">
                 <input type="text" id="searchBox" onkeyup="searchTable()" placeholder="SEARCH..." class="text-black font-bold p-1 px-3 text-[10px] w-48 rounded-sm outline-none">
-                <button onclick="shareOnWhatsApp()" class="bg-[#25D366] hover:bg-[#1ebd58] text-white px-4 py-1 rounded-sm text-[10px] font-black uppercase shadow-sm">
-                    Share WhatsApp
-                </button>
+                <button onclick="shareOnWhatsApp()" class="bg-[#25D366] text-white px-4 py-1 rounded-sm text-[10px] font-black uppercase">Share WhatsApp</button>
             </div>
         </div>
-        <div class="bg-white shadow-lg table-container border border-slate-200 rounded-b">
+        <div class="bg-white shadow-lg table-container border-soft rounded-b">
             <table class="w-full border-collapse" id="detailsTable">
                 <thead>
                     <tr>
@@ -141,7 +128,7 @@ async function loadData() {
         allIssues = data.issues || [];
         filteredIssues = [...allIssues];
         updateDashboard();
-    } catch (err) { console.error("Error loading data", err); }
+    } catch (err) { console.error("Data Load Failed", err); }
 }
 
 function updateDashboard() {
@@ -154,17 +141,14 @@ function updateDashboard() {
 function applyDateFilter() {
     const start = document.getElementById('startDate').value;
     const end = document.getElementById('endDate').value;
-    if (!start && !end) { filteredIssues = [...allIssues]; }
-    else {
-        filteredIssues = allIssues.filter(i => {
-            const date = i.created_on.split('T')[0];
-            return (!start || date >= start) && (!end || date <= end);
-        });
-    }
+    filteredIssues = allIssues.filter(i => {
+        const date = i.created_on.split('T')[0];
+        return (!start || date >= start) && (!end || date <= end);
+    });
     updateDashboard();
 }
 
-function isRes(status) { return ["Resolved", "Closed", "Rejected", "Completed"].includes(status); }
+const isRes = (s) => ["Resolved", "Closed", "Rejected", "Completed"].includes(s);
 
 function renderProjectSummary() {
     let pMap = {};
@@ -188,7 +172,7 @@ function renderProjectSummary() {
     Object.keys(pMap).sort().forEach(name => {
         const d = pMap[name];
         html += `<tr>
-            <td class="text-left font-bold border-l-4 border-slate-300">${name}</td>
+            <td class="text-left font-bold border-l-4 border-slate-200">${name}</td>
             <td class="clickable font-black" onclick="filterDetail('proj','${name}','Total')">${d.total}</td>
             <td class="clickable text-[#D32F2F] font-black" onclick="filterDetail('proj','${name}','Pending')">${d.pend}</td>
             <td class="clickable text-green-600 font-black" onclick="filterDetail('proj','${name}','Resolved')">${d.res}</td>
@@ -242,33 +226,23 @@ function renderAssigneeBreakdown() {
 
 function filterDetail(type, val, cat) {
     let list = [];
-    let label = "";
-
     if(type === 'proj') {
         list = filteredIssues.filter(i => i.project.name === val);
         if(cat === 'Pending') list = list.filter(i => !isRes(i.status.name));
         if(cat === 'Resolved') list = list.filter(i => isRes(i.status.name));
-        label = `${val} - ${cat}`;
-    } 
-    else if(type === 'proj-t') {
+    } else if(type === 'proj-t') {
         list = filteredIssues.filter(i => i.project.name === val && i.tracker.name === cat && !isRes(i.status.name));
-        label = `${val} - Pending ${cat}`;
-    }
-    else if(type === 'user') {
+    } else if(type === 'user') {
         const [p, u] = val.split('|');
         list = filteredIssues.filter(i => i.project.name === p && (i.assigned_to?.name || "Unassigned") === u);
         if(cat === 'Pending') list = list.filter(i => !isRes(i.status.name));
         if(cat === 'Resolved') list = list.filter(i => isRes(i.status.name));
-        label = `${u} (${cat})`;
-    }
-    else if(type === 'user-t') {
+    } else if(type === 'user-t') {
         const [p, u] = val.split('|');
         list = filteredIssues.filter(i => i.project.name === p && (i.assigned_to?.name || "Unassigned") === u && i.tracker.name === cat && !isRes(i.status.name));
-        label = `${u} - Pending ${cat}`;
     }
-
     currentDisplayList = list;
-    renderDetails(label, list);
+    renderDetails(`${val} (${cat})`, list);
     document.getElementById('detailsTable').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -277,7 +251,13 @@ function renderDetails(label, list) {
     let html = "";
     list.forEach(i => {
         const created = new Date(i.created_on);
-        const age = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24));
+        const diffMs = Date.now() - created;
+        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffHrs / 24);
+        
+        // Show hours if less than 24h, else show days
+        const ageDisplay = diffHrs < 24 ? `${diffHrs}h` : `${diffDays}d`;
+
         html += `<tr>
             <td class="font-black text-[#D32F2F] underline"><a href="https://redmine.prohorizon.in:3000/issues/${i.id}" target="_blank">${i.id}</a></td>
             <td class="font-bold text-slate-500">${i.project.name}</td>
@@ -286,19 +266,17 @@ function renderDetails(label, list) {
             <td class="text-center"><span class="px-2 py-0.5 rounded-sm text-[9px] font-black uppercase ${isRes(i.status.name) ? 'bg-green-600 text-white' : 'bg-[#D32F2F] text-white'}">${i.status.name}</span></td>
             <td class="font-black">${i.assigned_to?.name || "Unassigned"}</td>
             <td class="text-center">${created.toLocaleDateString('en-GB')}</td>
-            <td class="text-center font-black ${age > 2 ? 'text-red-600' : ''}">${age}d</td>
+            <td class="text-center font-black ${diffDays > 2 ? 'text-red-600' : ''}">${ageDisplay}</td>
         </tr>`;
     });
     document.getElementById("ticketTable").innerHTML = html;
 }
 
 function shareOnWhatsApp() {
-    if(currentDisplayList.length === 0) return alert("Select data to share!");
-    let msg = `🔴 *REDMINE MIS REPORT*\n━━━━━━━━━━━━━━━\n📊 *Category:* ${document.getElementById('detailTitle').innerText}\n🔢 *Count:* ${currentDisplayList.length}\n━━━━━━━━━━━━━━━\n\n`;
+    let msg = `🔴 *REDMINE REPORT*\n🔢 *Count:* ${currentDisplayList.length}\n\n`;
     currentDisplayList.slice(0, 15).forEach((i, idx) => {
-        msg += `${idx+1}. *ID ${i.id}*: ${i.subject.substring(0,40)}...\n   _Status: ${i.status.name}_\n\n`;
+        msg += `${idx+1}. *ID ${i.id}*: ${i.subject.substring(0,40)}...\n`;
     });
-    if(currentDisplayList.length > 15) msg += `_...and ${currentDisplayList.length-15} more._\n`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
