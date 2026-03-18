@@ -6,64 +6,62 @@
     <title>Prohorizon MIS | OPTIM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Professional Sharp Theme */
         :root {
-            --pro-red: #D32F2F; /* Deep Professional Red */
-            --pro-black: #1A1A1A;
+            --pro-red: #D32F2F;
+            --pro-grey: #64748b; /* Professional Slate Grey for borders */
             --wa-green: #25D366;
         }
-        .clickable { cursor: pointer; transition: all 0.2s; }
-        .clickable:hover { background-color: #f8d7da !important; color: var(--pro-red) !important; font-weight: bold; }
-        .table-container { max-height: 550px; overflow-y: auto; border: 1px solid var(--pro-black); }
-        th { position: sticky; top: 0; background: var(--pro-black); color: white; z-index: 10; padding: 12px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid #333; }
-        td { padding: 8px 10px; border: 1px solid #e5e7eb; font-size: 12px; color: #1a1a1a; }
-        tr:nth-child(even) { background-color: #fdfdfd; }
-        .btn-red { background-color: var(--pro-red); transition: opacity 0.2s; }
-        .btn-red:hover { opacity: 0.9; }
-        .btn-black { background-color: var(--pro-black); }
-        .btn-whatsapp { background-color: var(--wa-green) !important; color: white !important; font-weight: bold; }
+        .clickable { cursor: pointer; transition: all 0.2s; position: relative; }
+        .clickable:hover { background-color: #f1f5f9 !important; color: var(--pro-red) !important; font-weight: 800; }
+        .table-container { max-height: 500px; overflow-y: auto; border: 1px solid #e2e8f0; }
+        
+        /* Headers - Sleek Dark Grey */
+        th { position: sticky; top: 0; background: #334155; color: white; z-index: 10; padding: 10px; font-size: 10px; text-transform: uppercase; border: 1px solid #475569; }
+        td { padding: 8px 10px; border: 1px solid #f1f5f9; font-size: 12px; color: #1e293b; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        
+        .btn-action { transition: transform 0.1s; }
+        .btn-action:active { transform: scale(0.95); }
     </style>
 </head>
-<body class="bg-gray-50 p-6 font-sans">
+<body class="bg-[#fcfcfc] p-4 font-sans">
 
-    <div class="bg-white rounded-sm shadow-sm mb-6 border-t-[6px] border-[#D32F2F] p-5 border-x border-b border-gray-200">
-        <div class="flex flex-wrap justify-between items-center gap-6">
-            <div class="flex items-center gap-4">
-                <div class="h-10 border-l-4 border-black pl-3">
-                    <h1 class="text-xl font-black tracking-tighter text-black">PROHORIZON <span class="text-[#D32F2F]">DIGITECH</span></h1>
-                    <p class="text-[9px] font-bold text-gray-500 tracking-[0.2em] uppercase">Loan Origination System | OPTIM</p>
+    <div class="bg-white rounded shadow-sm mb-4 border-t-4 border-[#D32F2F] p-4 border border-slate-200">
+        <div class="flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="h-10 border-l-4 border-slate-800 pl-3">
+                    <h1 class="text-xl font-black text-slate-900">PROHORIZON <span class="text-[#D32F2F]">DIGITECH</span></h1>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Loan Origination System | OPTIM</p>
                 </div>
             </div>
             
-            <div class="flex flex-wrap gap-3 items-end">
-                <div class="flex gap-2">
-                    <div>
-                        <label class="block text-[9px] font-black text-gray-400 uppercase mb-1">From</label>
-                        <input type="date" id="startDate" class="border border-gray-300 p-2 rounded-sm text-xs font-bold focus:border-[#D32F2F] outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] font-black text-gray-400 uppercase mb-1">To</label>
-                        <input type="date" id="endDate" class="border border-gray-300 p-2 rounded-sm text-xs font-bold focus:border-[#D32F2F] outline-none">
-                    </div>
+            <div class="flex items-end gap-2">
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">From Date</label>
+                    <input type="date" id="startDate" class="border border-slate-300 p-2 rounded text-xs font-bold focus:ring-1 focus:ring-red-500 outline-none">
                 </div>
-                <button onclick="applyDateFilter()" class="btn-red text-white px-6 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest">Apply</button>
-                <button onclick="loadData()" class="btn-black text-white px-6 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest">Refresh</button>
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase mb-1">To Date</label>
+                    <input type="date" id="endDate" class="border border-slate-300 p-2 rounded text-xs font-bold focus:ring-1 focus:ring-red-500 outline-none">
+                </div>
+                <button onclick="applyDateFilter()" class="btn-action bg-[#D32F2F] text-white px-5 py-2 rounded text-[10px] font-black uppercase">Apply Calendar</button>
+                <button onclick="loadData()" class="btn-action bg-slate-800 text-white px-5 py-2 rounded text-[10px] font-black uppercase">Refresh Data</button>
             </div>
         </div>
     </div>
 
-    <div class="mb-8">
-        <div class="bg-black text-white px-4 py-2 text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
-            <span class="w-2 h-4 bg-[#D32F2F]"></span> Project Summary
+    <div class="mb-6">
+        <div class="bg-slate-100 text-slate-700 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider border border-slate-200 border-b-0 rounded-t flex items-center gap-2">
+            <span class="w-1.5 h-3 bg-[#D32F2F]"></span> Overall Projects Summary
         </div>
-        <div class="bg-white shadow-sm overflow-x-auto border-x border-b border-gray-200">
+        <div class="bg-white shadow-sm overflow-x-auto border border-slate-200 rounded-b">
             <table class="w-full border-collapse">
                 <thead>
-                    <tr>
+                    <tr class="text-center">
                         <th class="text-left">Project Name</th>
                         <th>Total</th>
-                        <th class="text-[#D32F2F]">Pending</th>
-                        <th class="text-green-500">Resolved</th>
+                        <th class="text-red-400">Pending</th>
+                        <th class="text-green-400">Resolved</th>
                         <th>SR</th>
                         <th>CR</th>
                         <th>Repeat SR</th>
@@ -71,24 +69,24 @@
                         <th>Feature</th>
                     </tr>
                 </thead>
-                <tbody id="projectSummary"></tbody>
+                <tbody id="projectSummary" class="text-center"></tbody>
             </table>
         </div>
     </div>
 
-    <div class="mb-8">
-        <div class="bg-black text-white px-4 py-2 text-[11px] font-black uppercase tracking-widest flex items-center gap-2">
-            <span class="w-2 h-4 bg-[#D32F2F]"></span> Assignee Wise Breakdown
+    <div class="mb-6">
+        <div class="bg-slate-800 text-white px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-t flex items-center gap-2">
+            Assignee Wise Breakdown
         </div>
-        <div class="bg-white shadow-sm table-container border-x border-b border-gray-200">
+        <div class="bg-white shadow-sm table-container border border-slate-200 rounded-b">
             <table class="w-full border-collapse">
                 <thead>
-                    <tr>
+                    <tr class="text-center">
                         <th class="text-left">Project</th>
                         <th class="text-left">Assignee</th>
                         <th>Total</th>
-                        <th class="text-[#D32F2F]">Pending</th>
-                        <th class="text-green-500">Resolved</th>
+                        <th class="text-red-400">Pending</th>
+                        <th class="text-green-400">Resolved</th>
                         <th>SR</th>
                         <th>CR</th>
                         <th>Repeat</th>
@@ -96,23 +94,22 @@
                         <th>Feature</th>
                     </tr>
                 </thead>
-                <tbody id="assigneeResolution"></tbody>
+                <tbody id="assigneeResolution" class="text-center"></tbody>
             </table>
         </div>
     </div>
 
     <div class="mb-10">
-        <div class="bg-[#D32F2F] text-white p-3 flex justify-between items-center shadow-lg">
-            <span id="detailTitle" class="text-[11px] font-black uppercase tracking-widest">Ticket Details (Live Feed)</span>
-            <div class="flex gap-4 items-center">
-                <input type="text" id="searchBox" onkeyup="searchTable()" placeholder="SEARCH SUBJECT OR ID..." class="text-black font-bold p-1.5 px-4 text-[10px] w-56 outline-none border-none shadow-inner">
-                <button onclick="shareOnWhatsApp()" class="btn-whatsapp px-4 py-1.5 text-[10px] uppercase flex items-center gap-2 rounded-sm shadow-md border border-white/20">
-                    <svg width="14" height="14" fill="white" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+        <div class="bg-[#D32F2F] text-white p-2.5 flex justify-between items-center rounded-t shadow-md">
+            <span id="detailTitle" class="text-[10px] font-black uppercase tracking-widest">TICKET DETAILS</span>
+            <div class="flex gap-2">
+                <input type="text" id="searchBox" onkeyup="searchTable()" placeholder="SEARCH..." class="text-black font-bold p-1 px-3 text-[10px] w-48 rounded-sm outline-none">
+                <button onclick="shareOnWhatsApp()" class="bg-[#25D366] hover:bg-[#1ebd58] text-white px-4 py-1 rounded-sm text-[10px] font-black uppercase shadow-sm">
                     Share WhatsApp
                 </button>
             </div>
         </div>
-        <div class="bg-white shadow-xl table-container border border-gray-200">
+        <div class="bg-white shadow-lg table-container border border-slate-200 rounded-b">
             <table class="w-full border-collapse" id="detailsTable">
                 <thead>
                     <tr>
@@ -122,7 +119,7 @@
                         <th>Tracker</th>
                         <th>Status</th>
                         <th class="text-left">Assignee</th>
-                        <th>Created Date</th>
+                        <th>Created</th>
                         <th>Age</th>
                     </tr>
                 </thead>
@@ -134,154 +131,175 @@
 <script>
 const API = window.location.origin + "/api/issues";
 let allIssues = [];
-let activeIssues = [];
-let currentFilteredList = [];
+let filteredIssues = [];
+let currentDisplayList = [];
 
 async function loadData() {
     try {
         const res = await fetch(API);
         const data = await res.json();
         allIssues = data.issues || [];
-        activeIssues = [...allIssues]; 
-        refreshUI();
-    } catch (err) { console.error("Sync Failed:", err); }
+        filteredIssues = [...allIssues];
+        updateDashboard();
+    } catch (err) { console.error("Error loading data", err); }
 }
 
-function isResolved(status) { 
-    return ["Resolved", "Closed", "Rejected", "Completed"].includes(status); 
+function updateDashboard() {
+    renderProjectSummary();
+    renderAssigneeBreakdown();
+    currentDisplayList = filteredIssues;
+    renderDetails("Full List", currentDisplayList);
 }
 
-function refreshUI() {
-    buildProjectSummary();
-    buildAssigneeResolution();
-    currentFilteredList = activeIssues;
-    renderTickets(currentFilteredList);
-    document.getElementById('detailTitle').innerText = "Ticket Details (Full List)";
+function applyDateFilter() {
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    if (!start && !end) { filteredIssues = [...allIssues]; }
+    else {
+        filteredIssues = allIssues.filter(i => {
+            const date = i.created_on.split('T')[0];
+            return (!start || date >= start) && (!end || date <= end);
+        });
+    }
+    updateDashboard();
 }
 
-function buildProjectSummary() {
-    let projects = {};
-    activeIssues.forEach(i => {
+function isRes(status) { return ["Resolved", "Closed", "Rejected", "Completed"].includes(status); }
+
+function renderProjectSummary() {
+    let pMap = {};
+    filteredIssues.forEach(i => {
         let p = i.project.name;
-        if (!projects[p]) projects[p] = { total:0, pending:0, resolved:0, sr:0, cr:0, repeat:0, support:0, feature:0 };
-        projects[p].total++;
-        if (isResolved(i.status.name)) projects[p].resolved++;
+        if(!pMap[p]) pMap[p] = { total:0, pend:0, res:0, SR:0, CR:0, RSR:0, SUP:0, FEA:0 };
+        pMap[p].total++;
+        if(isRes(i.status.name)) pMap[p].res++;
         else {
-            projects[p].pending++;
+            pMap[p].pend++;
             let t = i.tracker.name;
-            if (t === "SR") projects[p].sr++;
-            else if (t === "CR") projects[p].cr++;
-            else if (t === "Repeated SR") projects[p].repeat++;
-            else if (t === "Support") projects[p].support++;
-            else if (t === "Feature") projects[p].feature++;
+            if(t==="SR") pMap[p].SR++;
+            else if(t==="CR") pMap[p].CR++;
+            else if(t==="Repeated SR") pMap[p].RSR++;
+            else if(t==="Support") pMap[p].SUP++;
+            else if(t==="Feature") pMap[p].FEA++;
         }
     });
 
     let html = "";
-    Object.keys(projects).sort().forEach(p => {
-        const d = projects[p];
-        html += `<tr class="border-b border-gray-100">
-            <td class="font-bold text-black border-l-4 border-black">${p}</td>
-            <td class="text-center font-bold">${d.total}</td>
-            <td class="text-center text-[#D32F2F] clickable font-black" onclick="filterData('proj', '${p}', 'Pending')">${d.pending}</td>
-            <td class="text-center text-green-600 clickable font-black" onclick="filterData('proj', '${p}', 'Resolved')">${d.resolved}</td>
-            <td class="text-center font-semibold clickable" onclick="filterData('proj-track', '${p}', 'SR')">${d.sr}</td>
-            <td class="text-center font-semibold clickable" onclick="filterData('proj-track', '${p}', 'CR')">${d.cr}</td>
-            <td class="text-center font-semibold clickable" onclick="filterData('proj-track', '${p}', 'Repeated SR')">${d.repeat}</td>
-            <td class="text-center font-semibold clickable" onclick="filterData('proj-track', '${p}', 'Support')">${d.support}</td>
-            <td class="text-center font-semibold clickable" onclick="filterData('proj-track', '${p}', 'Feature')">${d.feature}</td>
+    Object.keys(pMap).sort().forEach(name => {
+        const d = pMap[name];
+        html += `<tr>
+            <td class="text-left font-bold border-l-4 border-slate-300">${name}</td>
+            <td class="clickable font-black" onclick="filterDetail('proj','${name}','Total')">${d.total}</td>
+            <td class="clickable text-[#D32F2F] font-black" onclick="filterDetail('proj','${name}','Pending')">${d.pend}</td>
+            <td class="clickable text-green-600 font-black" onclick="filterDetail('proj','${name}','Resolved')">${d.res}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','SR')">${d.SR}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','CR')">${d.CR}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','Repeated SR')">${d.RSR}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','Support')">${d.SUP}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','Feature')">${d.FEA}</td>
         </tr>`;
     });
     document.getElementById("projectSummary").innerHTML = html;
 }
 
-function buildAssigneeResolution() {
-    let map = {};
-    activeIssues.forEach(i => {
+function renderAssigneeBreakdown() {
+    let uMap = {};
+    filteredIssues.forEach(i => {
         let p = i.project.name;
         let u = i.assigned_to?.name || "Unassigned";
         let key = `${p}|${u}`;
-        if (!map[key]) map[key] = { p, u, total:0, pending:0, resolved:0, sr:0, cr:0, repeat:0, support:0, feature:0 };
-        map[key].total++;
-        if (isResolved(i.status.name)) map[key].resolved++;
+        if(!uMap[key]) uMap[key] = { p, u, total:0, pend:0, res:0, SR:0, CR:0, RSR:0, SUP:0, FEA:0 };
+        uMap[key].total++;
+        if(isRes(i.status.name)) uMap[key].res++;
         else {
-            map[key].pending++;
+            uMap[key].pend++;
             let t = i.tracker.name;
-            if (t === "SR") map[key].sr++;
-            else if (t === "CR") map[key].cr++;
-            else if (t === "Repeated SR") map[key].repeat++;
-            else if (t === "Support") map[key].support++;
-            else if (t === "Feature") map[key].feature++;
+            if(t==="SR") uMap[key].SR++;
+            else if(t==="CR") uMap[key].CR++;
+            else if(t==="Repeated SR") uMap[key].RSR++;
+            else if(t==="Support") uMap[key].SUP++;
+            else if(t==="Feature") uMap[key].FEA++;
         }
     });
 
     let html = "";
-    Object.values(map).sort((a,b) => a.p.localeCompare(b.p)).forEach(d => {
+    Object.values(uMap).sort((a,b)=>a.p.localeCompare(b.p)).forEach(d => {
         html += `<tr>
-            <td class="text-gray-500 font-medium">${d.p}</td>
-            <td class="font-bold text-black">${d.u}</td>
-            <td class="text-center font-bold">${d.total}</td>
-            <td class="text-center text-[#D32F2F] font-black clickable" onclick="filterData('user', '${d.p}|${d.u}', 'Pending')">${d.pending}</td>
-            <td class="text-center text-green-600 font-black clickable" onclick="filterData('user', '${d.p}|${d.u}', 'Resolved')">${d.resolved}</td>
-            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'SR')">${d.sr}</td>
-            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'CR')">${d.cr}</td>
-            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'Repeated SR')">${d.repeat}</td>
-            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'Support')">${d.support}</td>
-            <td class="text-center clickable" onclick="filterData('user-track', '${d.p}|${d.u}', 'Feature')">${d.feature}</td>
+            <td class="text-left text-slate-400 font-medium">${d.p}</td>
+            <td class="text-left font-bold text-slate-800">${d.u}</td>
+            <td class="clickable font-black" onclick="filterDetail('user','${d.p}|${d.u}','Total')">${d.total}</td>
+            <td class="clickable text-[#D32F2F] font-black" onclick="filterDetail('user','${d.p}|${d.u}','Pending')">${d.pend}</td>
+            <td class="clickable text-green-600 font-black" onclick="filterDetail('user','${d.p}|${d.u}','Resolved')">${d.res}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','SR')">${d.SR}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','CR')">${d.CR}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','Repeated SR')">${d.RSR}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','Support')">${d.SUP}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','Feature')">${d.FEA}</td>
         </tr>`;
     });
     document.getElementById("assigneeResolution").innerHTML = html;
 }
 
-function filterData(mode, val, sub) {
-    if (mode === 'proj') {
-        currentFilteredList = activeIssues.filter(i => i.project.name === val && (sub === 'Pending' ? !isResolved(i.status.name) : isResolved(i.status.name)));
-        document.getElementById('detailTitle').innerText = `PROJECT: ${val} (${sub})`;
-    } else if (mode === 'user') {
-        const [pName, uName] = val.split('|');
-        currentFilteredList = activeIssues.filter(i => i.project.name === pName && (i.assigned_to?.name || "Unassigned") === uName && (sub === 'Pending' ? !isResolved(i.status.name) : isResolved(i.status.name)));
-        document.getElementById('detailTitle').innerText = `ASSIGNEE: ${uName} (${sub})`;
+function filterDetail(type, val, cat) {
+    let list = [];
+    let label = "";
+
+    if(type === 'proj') {
+        list = filteredIssues.filter(i => i.project.name === val);
+        if(cat === 'Pending') list = list.filter(i => !isRes(i.status.name));
+        if(cat === 'Resolved') list = list.filter(i => isRes(i.status.name));
+        label = `${val} - ${cat}`;
+    } 
+    else if(type === 'proj-t') {
+        list = filteredIssues.filter(i => i.project.name === val && i.tracker.name === cat && !isRes(i.status.name));
+        label = `${val} - Pending ${cat}`;
     }
-    renderTickets(currentFilteredList);
+    else if(type === 'user') {
+        const [p, u] = val.split('|');
+        list = filteredIssues.filter(i => i.project.name === p && (i.assigned_to?.name || "Unassigned") === u);
+        if(cat === 'Pending') list = list.filter(i => !isRes(i.status.name));
+        if(cat === 'Resolved') list = list.filter(i => isRes(i.status.name));
+        label = `${u} (${cat})`;
+    }
+    else if(type === 'user-t') {
+        const [p, u] = val.split('|');
+        list = filteredIssues.filter(i => i.project.name === p && (i.assigned_to?.name || "Unassigned") === u && i.tracker.name === cat && !isRes(i.status.name));
+        label = `${u} - Pending ${cat}`;
+    }
+
+    currentDisplayList = list;
+    renderDetails(label, list);
     document.getElementById('detailsTable').scrollIntoView({ behavior: 'smooth' });
 }
 
-function renderTickets(list) {
+function renderDetails(label, list) {
+    document.getElementById('detailTitle').innerText = `TICKET DETAILS: ${label.toUpperCase()}`;
     let html = "";
     list.forEach(i => {
-        const createdDate = new Date(i.created_on);
-        const diffMs = Date.now() - createdDate;
-        const hrs = Math.floor(diffMs / (1000 * 60 * 60));
-        const days = Math.floor(hrs / 24);
-        const age = hrs < 24 ? `${hrs}h` : `${days}d`;
-
+        const created = new Date(i.created_on);
+        const age = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24));
         html += `<tr>
-            <td class="text-center font-bold text-[#D32F2F] underline"><a target="_blank" href="https://redmine.prohorizon.in:3000/issues/${i.id}">${i.id}</a></td>
-            <td class="text-black font-bold text-[10px]">${i.project.name}</td>
-            <td class="max-w-md truncate text-black font-bold">${i.subject}</td>
-            <td class="text-center text-[10px] font-black uppercase text-gray-500">${i.tracker.name}</td>
-            <td class="text-center"><span class="px-2 py-0.5 rounded-sm text-[9px] font-black uppercase ${isResolved(i.status.name) ? 'bg-green-600 text-white' : 'bg-[#D32F2F] text-white'}">${i.status.name}</span></td>
-            <td class="text-black font-black">${i.assigned_to?.name || "Unassigned"}</td>
-            <td class="text-center text-gray-700 font-bold">${createdDate.toLocaleDateString('en-GB')}</td>
-            <td class="text-center font-black ${days > 3 ? 'text-red-700' : 'text-black'}">${age}</td>
+            <td class="font-black text-[#D32F2F] underline"><a href="https://redmine.prohorizon.in:3000/issues/${i.id}" target="_blank">${i.id}</a></td>
+            <td class="font-bold text-slate-500">${i.project.name}</td>
+            <td class="max-w-xs truncate font-bold">${i.subject}</td>
+            <td class="text-center font-black text-[10px] text-slate-500">${i.tracker.name}</td>
+            <td class="text-center"><span class="px-2 py-0.5 rounded-sm text-[9px] font-black uppercase ${isRes(i.status.name) ? 'bg-green-600 text-white' : 'bg-[#D32F2F] text-white'}">${i.status.name}</span></td>
+            <td class="font-black">${i.assigned_to?.name || "Unassigned"}</td>
+            <td class="text-center">${created.toLocaleDateString('en-GB')}</td>
+            <td class="text-center font-black ${age > 2 ? 'text-red-600' : ''}">${age}d</td>
         </tr>`;
     });
     document.getElementById("ticketTable").innerHTML = html;
 }
 
 function shareOnWhatsApp() {
-    if (currentFilteredList.length === 0) return alert("Select data first!");
-    let title = document.getElementById('detailTitle').innerText;
-    let message = `🔴 *PROHORIZON REDMINE REPORT*\n━━━━━━━━━━━━━━━━\n📊 *Ref:* ${title}\n🔢 *Tickets:* ${currentFilteredList.length}\n━━━━━━━━━━━━━━━━\n\n`;
-    
-    currentFilteredList.slice(0, 20).forEach((i, idx) => {
-        message += `${idx + 1}. *ID ${i.id}*: ${i.subject.substring(0, 45)}...\n   Status: _${i.status.name}_\n\n`;
+    if(currentDisplayList.length === 0) return alert("Select data to share!");
+    let msg = `🔴 *REDMINE MIS REPORT*\n━━━━━━━━━━━━━━━\n📊 *Category:* ${document.getElementById('detailTitle').innerText}\n🔢 *Count:* ${currentDisplayList.length}\n━━━━━━━━━━━━━━━\n\n`;
+    currentDisplayList.slice(0, 15).forEach((i, idx) => {
+        msg += `${idx+1}. *ID ${i.id}*: ${i.subject.substring(0,40)}...\n   _Status: ${i.status.name}_\n\n`;
     });
-    
-    if (currentFilteredList.length > 20) message += `_...and ${currentFilteredList.length - 20} more tickets._\n`;
-    message += `\n📅 *Sent:* ${new Date().toLocaleString()}`;
-    
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    if(currentDisplayList.length > 15) msg += `_...and ${currentDisplayList.length-15} more._\n`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function searchTable() {
