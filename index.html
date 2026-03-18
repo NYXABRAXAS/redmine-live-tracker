@@ -7,17 +7,32 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --pro-red: #D32F2F; --ref-grey: #666666; --border-grey: #cccccc; }
+        :root {
+            --pro-red: #D32F2F;
+            --ref-grey: #666666; /* Your requested Grey */
+            --border-grey: #cccccc;
+        }
+        .clickable { cursor: pointer; transition: all 0.2s; }
+        .clickable:hover { background-color: #fee2e2 !important; color: var(--pro-red) !important; font-weight: 800; }
+        
+        .border-custom { border: 1px solid var(--border-grey); }
+        .table-container { max-height: 500px; overflow-y: auto; border: 1px solid var(--border-grey); }
+        
+        /* Updated Header to your specific Grey */
         th { 
-            position: sticky; top: 0; background: var(--ref-grey) !important; 
-            color: white !important; z-index: 10; padding: 10px; font-size: 10px; 
-            text-transform: uppercase; border: 1px solid #555555; 
+            position: sticky; 
+            top: 0; 
+            background: var(--ref-grey) !important; 
+            color: white !important; 
+            z-index: 10; 
+            padding: 10px; 
+            font-size: 10px; 
+            text-transform: uppercase; 
+            border: 1px solid #555555; 
         }
         td { padding: 8px 10px; border: 1px solid #e5e7eb; font-size: 11px; color: #1e293b; }
         tr:nth-child(even) { background-color: #f9fafb; }
-        .border-custom { border: 1px solid var(--border-grey); }
-        .table-container { max-height: 450px; overflow-y: auto; border: 1px solid var(--border-grey); }
-        .btn-action { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; cursor: pointer; }
+        .btn-action { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
     </style>
 </head>
 <body class="bg-[#fcfcfc] p-4 font-sans text-slate-900">
@@ -30,8 +45,18 @@
                     <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Loan Origination System | OPTIM</p>
                 </div>
             </div>
+            
             <div class="flex items-end gap-2">
-                <button onclick="loadData()" class="bg-[#666666] text-white px-5 py-2 rounded text-[10px] font-black uppercase tracking-widest">Refresh Live Data</button>
+                <div>
+                    <label class="block text-[8px] font-black text-slate-400 uppercase mb-1">From</label>
+                    <input type="date" id="startDate" class="border border-slate-300 p-2 rounded text-xs font-bold outline-none">
+                </div>
+                <div>
+                    <label class="block text-[8px] font-black text-slate-400 uppercase mb-1">To</label>
+                    <input type="date" id="endDate" class="border border-slate-300 p-2 rounded text-xs font-bold outline-none">
+                </div>
+                <button onclick="applyDateFilter()" class="bg-[#D32F2F] text-white px-5 py-2 rounded text-[10px] font-black uppercase">Apply Filter</button>
+                <button onclick="loadData()" class="bg-[#666666] text-white px-5 py-2 rounded text-[10px] font-black uppercase">Refresh</button>
             </div>
         </div>
     </div>
@@ -39,7 +64,7 @@
     <div class="mb-6">
         <div class="bg-slate-100 px-3 py-2 text-[10px] font-black uppercase border-custom border-b-0 rounded-t">Overall Project Summary</div>
         <div class="bg-white shadow-sm overflow-x-auto border-custom rounded-b">
-            <table class="w-full text-center">
+            <table class="w-full text-center" id="summaryTable">
                 <thead>
                     <tr>
                         <th class="text-left">Project Name</th>
@@ -56,8 +81,7 @@
         <div class="bg-[#666666] text-white px-3 py-2 flex justify-between items-center rounded-t border-custom border-b-0">
             <span class="text-[10px] font-black uppercase">Assignee Wise Breakdown</span>
             <div class="flex gap-2">
-                <button onclick="exportTable('assigneeTable', 'Assignee_Report')" class="btn-action bg-white text-slate-800">Export Excel</button>
-                <button onclick="shareAssigneeWhatsApp()" class="btn-action bg-[#25D366] text-white">Share WhatsApp</button>
+                <button onclick="exportExcel('assigneeTable', 'Assignee_Report')" class="btn-action bg-white text-slate-800">Export Excel</button>
             </div>
         </div>
         <div class="bg-white shadow-sm table-container border-custom rounded-b">
@@ -79,8 +103,8 @@
             <span id="detailTitle" class="text-[10px] font-black uppercase tracking-widest">TICKET DETAILS</span>
             <div class="flex gap-2 items-center">
                 <input type="text" id="searchBox" onkeyup="searchTable()" placeholder="SEARCH..." class="text-black font-bold p-1 px-3 text-[10px] w-40 rounded-sm outline-none">
-                <button onclick="exportTable('detailsTable', 'Ticket_Details')" class="btn-action bg-white text-slate-800">Export Excel</button>
-                <button onclick="shareDetailsWhatsApp()" class="btn-action bg-[#25D366] text-white">Share WhatsApp</button>
+                <button onclick="exportExcel('detailsTable', 'Ticket_Details')" class="btn-action bg-white text-slate-800">Export Excel</button>
+                <button onclick="shareOnWhatsApp()" class="btn-action bg-[#25D366] text-white">Share WhatsApp</button>
             </div>
         </div>
         <div class="bg-white shadow-lg table-container border-custom rounded-b">
@@ -98,103 +122,178 @@
     </div>
 
 <script>
-    const API = "/api/issues";
-    let allIssues = [];
+const API = "/api/issues";
+let allIssues = [];
+let filteredIssues = [];
+let currentDisplayList = [];
 
-    const isRes = (s) => ["Resolved", "Closed", "Rejected", "Completed"].includes(s);
+async function loadData() {
+    try {
+        const res = await fetch(API);
+        const data = await res.json();
+        allIssues = data.issues || [];
+        filteredIssues = [...allIssues];
+        updateDashboard();
+    } catch (err) { console.error("Data Load Failed", err); }
+}
 
-    async function loadData() {
-        try {
-            const res = await fetch(API);
-            const data = await res.json();
-            allIssues = data.issues || [];
-            renderDashboard();
-        } catch (err) {
-            console.error("Fetch failed:", err);
+function updateDashboard() {
+    renderProjectSummary();
+    renderAssigneeBreakdown();
+    currentDisplayList = filteredIssues;
+    renderDetails("Full List", currentDisplayList);
+}
+
+function applyDateFilter() {
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    filteredIssues = allIssues.filter(i => {
+        const date = i.created_on.split('T')[0];
+        return (!start || date >= start) && (!end || date <= end);
+    });
+    updateDashboard();
+}
+
+const isRes = (s) => ["Resolved", "Closed", "Rejected", "Completed"].includes(s);
+
+function renderProjectSummary() {
+    let pMap = {};
+    filteredIssues.forEach(i => {
+        let p = i.project.name;
+        if(!pMap[p]) pMap[p] = { total:0, pend:0, res:0, SR:0, CR:0, RSR:0, SUP:0, FEA:0 };
+        pMap[p].total++;
+        if(isRes(i.status.name)) pMap[p].res++;
+        else {
+            pMap[p].pend++;
+            let t = i.tracker.name;
+            if(t==="SR") pMap[p].SR++;
+            else if(t==="CR") pMap[p].CR++;
+            else if(t==="Repeated SR") pMap[p].RSR++;
+            else if(t==="Support") pMap[p].SUP++;
+            else if(t==="Feature") pMap[p].FEA++;
         }
+    });
+
+    let html = "";
+    Object.keys(pMap).sort().forEach(name => {
+        const d = pMap[name];
+        html += `<tr>
+            <td class="text-left font-bold border-l-4 border-slate-300">${name}</td>
+            <td class="clickable font-black" onclick="filterDetail('proj','${name}','Total')">${d.total}</td>
+            <td class="clickable text-[#D32F2F] font-black" onclick="filterDetail('proj','${name}','Pending')">${d.pend}</td>
+            <td class="clickable text-green-600 font-black" onclick="filterDetail('proj','${name}','Resolved')">${d.res}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','SR')">${d.SR}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','CR')">${d.CR}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','Repeated SR')">${d.RSR}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','Support')">${d.SUP}</td>
+            <td class="clickable" onclick="filterDetail('proj-t','${name}','Feature')">${d.FEA}</td>
+        </tr>`;
+    });
+    document.getElementById("projectSummary").innerHTML = html;
+}
+
+function renderAssigneeBreakdown() {
+    let uMap = {};
+    filteredIssues.forEach(i => {
+        let p = i.project.name;
+        let u = i.assigned_to?.name || "Unassigned";
+        let key = `${p}|${u}`;
+        if(!uMap[key]) uMap[key] = { p, u, total:0, pend:0, res:0, SR:0, CR:0, RSR:0, SUP:0, FEA:0 };
+        uMap[key].total++;
+        if(isRes(i.status.name)) uMap[key].res++;
+        else {
+            uMap[key].pend++;
+            let t = i.tracker.name;
+            if(t==="SR") uMap[key].SR++;
+            else if(t==="CR") uMap[key].CR++;
+            else if(t==="Repeated SR") uMap[key].RSR++;
+            else if(t==="Support") uMap[key].SUP++;
+            else if(t==="Feature") uMap[key].FEA++;
+        }
+    });
+
+    let html = "";
+    Object.values(uMap).sort((a,b)=>a.p.localeCompare(b.p)).forEach(d => {
+        html += `<tr>
+            <td class="text-left text-slate-400 font-medium">${d.p}</td>
+            <td class="text-left font-bold text-slate-800">${d.u}</td>
+            <td class="clickable font-black" onclick="filterDetail('user','${d.p}|${d.u}','Total')">${d.total}</td>
+            <td class="clickable text-[#D32F2F] font-black" onclick="filterDetail('user','${d.p}|${d.u}','Pending')">${d.pend}</td>
+            <td class="clickable text-green-600 font-black" onclick="filterDetail('user','${d.p}|${d.u}','Resolved')">${d.res}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','SR')">${d.SR}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','CR')">${d.CR}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','Repeated SR')">${d.RSR}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','Support')">${d.SUP}</td>
+            <td class="clickable" onclick="filterDetail('user-t','${d.p}|${d.u}','Feature')">${d.FEA}</td>
+        </tr>`;
+    });
+    document.getElementById("assigneeResolution").innerHTML = html;
+}
+
+function filterDetail(type, val, cat) {
+    let list = [];
+    if(type === 'proj') {
+        list = filteredIssues.filter(i => i.project.name === val);
+        if(cat === 'Pending') list = list.filter(i => !isRes(i.status.name));
+        if(cat === 'Resolved') list = list.filter(i => isRes(i.status.name));
+    } else if(type === 'proj-t') {
+        list = filteredIssues.filter(i => i.project.name === val && i.tracker.name === cat && !isRes(i.status.name));
+    } else if(type === 'user') {
+        const [p, u] = val.split('|');
+        list = filteredIssues.filter(i => i.project.name === p && (i.assigned_to?.name || "Unassigned") === u);
+        if(cat === 'Pending') list = list.filter(i => !isRes(i.status.name));
+        if(cat === 'Resolved') list = list.filter(i => isRes(i.status.name));
+    } else if(type === 'user-t') {
+        const [p, u] = val.split('|');
+        list = filteredIssues.filter(i => i.project.name === p && (i.assigned_to?.name || "Unassigned") === u && i.tracker.name === cat && !isRes(i.status.name));
     }
+    currentDisplayList = list;
+    renderDetails(`${val} (${cat})`, list);
+    document.getElementById('detailsTable').scrollIntoView({ behavior: 'smooth' });
+}
 
-    function renderDashboard() {
-        renderProjectSummary();
-        renderAssigneeBreakdown();
-        renderTickets(allIssues);
-    }
+function renderDetails(label, list) {
+    document.getElementById('detailTitle').innerText = `TICKET DETAILS: ${label.toUpperCase()} (${list.length})`;
+    let html = "";
+    list.forEach(i => {
+        const created = new Date(i.created_on);
+        const diffHrs = Math.floor((Date.now() - created) / 3600000);
+        const age = diffHrs < 24 ? `${diffHrs}h` : `${Math.floor(diffHrs/24)}d`;
 
-    function renderProjectSummary() {
-        const pMap = {};
-        allIssues.forEach(i => {
-            const p = i.project.name;
-            if(!pMap[p]) pMap[p] = { total:0, pend:0, res:0, SR:0, CR:0, RSR:0, SUP:0, FEA:0 };
-            pMap[p].total++;
-            if(isRes(i.status.name)) pMap[p].res++;
-            else {
-                pMap[p].pend++;
-                const t = i.tracker.name;
-                if(t==="SR") pMap[p].SR++;
-                else if(t==="CR") pMap[p].CR++;
-                else if(t==="Repeated SR") pMap[p].RSR++;
-                else if(t==="Support") pMap[p].SUP++;
-                else if(t==="Feature") pMap[p].FEA++;
-            }
-        });
+        html += `<tr>
+            <td class="font-black text-[#D32F2F] underline"><a href="https://redmine.prohorizon.in:3000/issues/${i.id}" target="_blank">${i.id}</a></td>
+            <td class="font-bold text-slate-500">${i.project.name}</td>
+            <td class="max-w-xs truncate font-bold">${i.subject}</td>
+            <td class="text-center font-bold text-slate-500">${i.tracker.name}</td>
+            <td class="text-center"><span class="px-2 py-0.5 rounded-sm text-[9px] font-black uppercase ${isRes(i.status.name) ? 'bg-green-600 text-white' : 'bg-[#D32F2F] text-white'}">${i.status.name}</span></td>
+            <td class="font-black">${i.assigned_to?.name || "Unassigned"}</td>
+            <td class="text-center">${created.toLocaleDateString('en-GB')}</td>
+            <td class="text-center font-black">${age}</td>
+        </tr>`;
+    });
+    document.getElementById("ticketTable").innerHTML = html;
+}
 
-        let html = "";
-        Object.keys(pMap).forEach(name => {
-            const d = pMap[name];
-            html += `<tr><td class="text-left font-bold">${name}</td><td>${d.total}</td><td class="text-red-600 font-bold">${d.pend}</td><td class="text-green-600 font-bold">${d.res}</td><td>${d.SR}</td><td>${d.CR}</td><td>${d.RSR}</td><td>${d.SUP}</td><td>${d.FEA}</td></tr>`;
-        });
-        document.getElementById("projectSummary").innerHTML = html;
-    }
+// Fixed Excel Export Function
+function exportExcel(tableId, filename) {
+    const table = document.getElementById(tableId);
+    const wb = XLSX.utils.table_to_book(table);
+    XLSX.writeFile(wb, `${filename}_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
 
-    function renderAssigneeBreakdown() {
-        const uMap = {};
-        allIssues.forEach(i => {
-            const key = `${i.project.name}|${i.assigned_to?.name || "Unassigned"}`;
-            if(!uMap[key]) uMap[key] = { p: i.project.name, u: i.assigned_to?.name || "Unassigned", total:0, pend:0, res:0 };
-            uMap[key].total++;
-            isRes(i.status.name) ? uMap[key].res++ : uMap[key].pend++;
-        });
+function shareOnWhatsApp() {
+    let msg = `🔴 *OPTIM REPORT*\nCount: ${currentDisplayList.length}\n\n`;
+    currentDisplayList.slice(0, 10).forEach(i => msg += `• *#${i.id}*: ${i.subject.substring(0,30)}...\n`);
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
 
-        let html = "";
-        Object.values(uMap).forEach(d => {
-            html += `<tr><td class="text-left">${d.p}</td><td class="text-left font-bold">${d.u}</td><td>${d.total}</td><td class="text-red-600 font-bold">${d.pend}</td><td class="text-green-600 font-bold">${d.res}</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`;
-        });
-        document.getElementById("assigneeResolution").innerHTML = html;
-    }
+function searchTable() {
+    const term = document.getElementById("searchBox").value.toLowerCase();
+    const rows = document.querySelectorAll("#ticketTable tr");
+    rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(term) ? "" : "none");
+}
 
-    function renderTickets(list) {
-        document.getElementById("ticketTable").innerHTML = list.map(i => {
-            const diffHrs = Math.floor((Date.now() - new Date(i.created_on)) / 3600000);
-            const age = diffHrs < 24 ? `${diffHrs}h` : `${Math.floor(diffHrs/24)}d`;
-            return `<tr>
-                <td class="font-bold text-red-600 underline"><a href="https://redmine.prohorizon.in:3000/issues/${i.id}" target="_blank">${i.id}</a></td>
-                <td class="text-left">${i.project.name}</td><td class="text-left truncate max-w-xs">${i.subject}</td>
-                <td>${i.tracker.name}</td><td><span class="px-2 py-0.5 rounded text-[9px] text-white ${isRes(i.status.name)?'bg-green-600':'bg-red-600'}">${i.status.name}</span></td>
-                <td class="font-bold">${i.assigned_to?.name || "Unassigned"}</td><td>${new Date(i.created_on).toLocaleDateString('en-GB')}</td><td class="font-bold">${age}</td>
-            </tr>`;
-        }).join('');
-    }
-
-    function exportTable(id, name) {
-        XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById(id)), `${name}.xlsx`);
-    }
-
-    function searchTable() {
-        const term = document.getElementById("searchBox").value.toLowerCase();
-        renderTickets(allIssues.filter(i => i.subject.toLowerCase().includes(term) || i.id.toString().includes(term)));
-    }
-
-    function shareDetailsWhatsApp() {
-        let msg = `*OPTIM REPORT*\nTotal Issues: ${allIssues.length}`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    function shareAssigneeWhatsApp() {
-        let msg = `*ASSIGNEE LOAD*\n`;
-        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    window.onload = loadData;
+loadData();
 </script>
 </body>
 </html>
