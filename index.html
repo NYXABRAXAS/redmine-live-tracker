@@ -9,11 +9,10 @@
     <style>
         :root {
             --pro-red: #D32F2F;
-            --ref-grey: #666666; /* Exact grey from your uploaded image */
+            --ref-grey: #666666;
             --border-grey: #cccccc;
         }
         
-        /* Updated Header Style based on your grey image */
         th { 
             position: sticky; 
             top: 0; 
@@ -27,12 +26,14 @@
         }
         
         .border-custom { border: 1px solid var(--border-grey); }
-        .table-container { max-height: 450px; overflow-y: auto; border: 1px solid var(--border-grey); }
+        .table-container { max-height: 400px; overflow-y: auto; border: 1px solid var(--border-grey); }
         
         td { padding: 8px 10px; border: 1px solid #e5e7eb; font-size: 11px; color: #1e293b; }
         tr:nth-child(even) { background-color: #f9fafb; }
         
         .btn-action { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
+        .clickable { cursor: pointer; }
+        .clickable:hover { background-color: #fee2e2 !important; }
     </style>
 </head>
 <body class="bg-[#fcfcfc] p-4 font-sans text-slate-900">
@@ -45,11 +46,9 @@
                     <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Loan Origination System | OPTIM</p>
                 </div>
             </div>
-            
             <div class="flex items-end gap-2">
                 <input type="date" id="startDate" class="border border-slate-300 p-2 rounded text-xs font-bold">
                 <input type="date" id="endDate" class="border border-slate-300 p-2 rounded text-xs font-bold">
-                <button onclick="applyDateFilter()" class="bg-[#D32F2F] text-white px-5 py-2 rounded text-[10px] font-black uppercase">Apply Calendar</button>
                 <button onclick="loadData()" class="bg-[#666666] text-white px-5 py-2 rounded text-[10px] font-black uppercase">Refresh Data</button>
             </div>
         </div>
@@ -58,7 +57,7 @@
     <div class="mb-6">
         <div class="bg-slate-100 px-3 py-2 text-[10px] font-black uppercase border-custom border-b-0 rounded-t">Overall Project Summary</div>
         <div class="bg-white shadow-sm overflow-x-auto border-custom rounded-b">
-            <table class="w-full text-center" id="summaryTable">
+            <table class="w-full text-center">
                 <thead>
                     <tr>
                         <th class="text-left">Project Name</th>
@@ -75,7 +74,7 @@
         <div class="bg-[#666666] text-white px-3 py-2 flex justify-between items-center rounded-t border-custom border-b-0">
             <span class="text-[10px] font-black uppercase">Assignee Wise Breakdown</span>
             <div class="flex gap-2">
-                <button onclick="exportTable('assigneeTable', 'Assignee_Report')" class="btn-action bg-white text-slate-800">Export Excel</button>
+                <button onclick="exportTable('assigneeTable', 'Assignee_Workload')" class="btn-action bg-white text-slate-800">Export Excel</button>
                 <button onclick="shareAssigneeWhatsApp()" class="btn-action bg-[#25D366] text-white">Share WhatsApp</button>
             </div>
         </div>
@@ -98,7 +97,7 @@
             <span id="detailTitle" class="text-[10px] font-black uppercase tracking-widest">TICKET DETAILS</span>
             <div class="flex gap-2 items-center">
                 <input type="text" id="searchBox" onkeyup="searchTable()" placeholder="SEARCH..." class="text-black font-bold p-1 px-3 text-[10px] w-40 rounded-sm">
-                <button onclick="exportTable('detailsTable', 'Ticket_Details')" class="btn-action bg-white text-slate-800">Export Excel</button>
+                <button onclick="exportTable('detailsTable', 'Ticket_Export')" class="btn-action bg-white text-slate-800">Export Excel</button>
                 <button onclick="shareDetailsWhatsApp()" class="btn-action bg-[#25D366] text-white">Share WhatsApp</button>
             </div>
         </div>
@@ -117,9 +116,134 @@
     </div>
 
 <script>
-// The logic for fetching data, Exporting to Excel, WhatsApp sharing, 
-// and Hourly Aging (e.g., "22h") remains fully integrated here.
-// [Includes XLSX and WhatsApp functions as provided previously]
+    const API = "/api/issues";
+    let allIssues = [];
+
+    // Check if status is "Resolved" or similar
+    const isRes = (s) => ["Resolved", "Closed", "Rejected", "Completed"].includes(s);
+
+    async function loadData() {
+        try {
+            const res = await fetch(API);
+            const data = await res.json();
+            allIssues = data.issues || [];
+            updateDashboard(allIssues);
+        } catch (err) {
+            console.error("API Error:", err);
+        }
+    }
+
+    function updateDashboard(issues) {
+        renderProjectSummary(issues);
+        renderAssigneeBreakdown(issues);
+        renderTicketDetails(issues);
+    }
+
+    function renderProjectSummary(issues) {
+        const pMap = {};
+        issues.forEach(i => {
+            const p = i.project.name;
+            if(!pMap[p]) pMap[p] = { total:0, pend:0, res:0, SR:0, CR:0, RSR:0, SUP:0, FEA:0 };
+            pMap[p].total++;
+            if(isRes(i.status.name)) pMap[p].res++;
+            else {
+                pMap[p].pend++;
+                const t = i.tracker.name;
+                if(t==="SR") pMap[p].SR++;
+                else if(t==="CR") pMap[p].CR++;
+                else if(t==="Repeated SR") pMap[p].RSR++;
+                else if(t==="Support") pMap[p].SUP++;
+                else if(t==="Feature") pMap[p].FEA++;
+            }
+        });
+
+        let html = "";
+        Object.keys(pMap).forEach(name => {
+            const d = pMap[name];
+            html += `<tr>
+                <td class="text-left font-bold border-l-4 border-slate-300">${name}</td>
+                <td>${d.total}</td><td class="text-red-600 font-bold">${d.pend}</td><td class="text-green-600 font-bold">${d.res}</td>
+                <td>${d.SR}</td><td>${d.CR}</td><td>${d.RSR}</td><td>${d.SUP}</td><td>${d.FEA}</td>
+            </tr>`;
+        });
+        document.getElementById("projectSummary").innerHTML = html;
+    }
+
+    function renderAssigneeBreakdown(issues) {
+        const uMap = {};
+        issues.forEach(i => {
+            const key = `${i.project.name}|${i.assigned_to?.name || "Unassigned"}`;
+            if(!uMap[key]) uMap[key] = { p: i.project.name, u: i.assigned_to?.name || "Unassigned", total:0, pend:0, res:0 };
+            uMap[key].total++;
+            isRes(i.status.name) ? uMap[key].res++ : uMap[key].pend++;
+        });
+
+        let html = "";
+        Object.values(uMap).forEach(d => {
+            html += `<tr>
+                <td class="text-left text-slate-500">${d.p}</td>
+                <td class="text-left font-bold">${d.u}</td>
+                <td>${d.total}</td><td class="text-red-600 font-bold">${d.pend}</td><td class="text-green-600 font-bold">${d.res}</td>
+                <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+            </tr>`;
+        });
+        document.getElementById("assigneeResolution").innerHTML = html;
+    }
+
+    function renderTicketDetails(issues) {
+        let html = "";
+        issues.forEach(i => {
+            const created = new Date(i.created_on);
+            const diffHrs = Math.floor((Date.now() - created) / 3600000);
+            const ageDisp = diffHrs < 24 ? `${diffHrs}h` : `${Math.floor(diffHrs/24)}d`;
+
+            html += `<tr>
+                <td class="font-black text-red-600 underline"><a href="https://redmine.prohorizon.in:3000/issues/${i.id}" target="_blank">${i.id}</a></td>
+                <td class="text-left">${i.project.name}</td>
+                <td class="text-left truncate max-w-xs font-medium">${i.subject}</td>
+                <td>${i.tracker.name}</td>
+                <td><span class="px-2 py-0.5 rounded text-[9px] text-white ${isRes(i.status.name) ? 'bg-green-600':'bg-red-600'}">${i.status.name}</span></td>
+                <td class="font-bold">${i.assigned_to?.name || "Unassigned"}</td>
+                <td>${created.toLocaleDateString('en-GB')}</td>
+                <td class="font-bold">${ageDisp}</td>
+            </tr>`;
+        });
+        document.getElementById("ticketTable").innerHTML = html;
+    }
+
+    function exportTable(id, name) {
+        const table = document.getElementById(id);
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `${name}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    function shareDetailsWhatsApp() {
+        let msg = `*OPTIM DASHBOARD REPORT*\n\n`;
+        allIssues.slice(0, 10).forEach(i => msg += `• *#${i.id}*: ${i.subject.substring(0,30)}...\n`);
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function shareAssigneeWhatsApp() {
+        let msg = `*ASSIGNEE LOAD SUMMARY*\n\n`;
+        const rows = document.querySelectorAll("#assigneeResolution tr");
+        rows.forEach(r => {
+            const cols = r.querySelectorAll("td");
+            msg += `*${cols[1].innerText}*: ${cols[3].innerText} Pending\n`;
+        });
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function searchTable() {
+        const term = document.getElementById("searchBox").value.toLowerCase();
+        const filtered = allIssues.filter(i => 
+            i.subject.toLowerCase().includes(term) || 
+            (i.assigned_to?.name || "").toLowerCase().includes(term) ||
+            i.id.toString().includes(term)
+        );
+        renderTicketDetails(filtered);
+    }
+
+    window.onload = loadData;
 </script>
 </body>
 </html>
